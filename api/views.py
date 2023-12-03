@@ -3,15 +3,24 @@ from django.views import View
 from .forms import RateForm, CommentForm, BookmarkForm
 from django.conf import settings
 from .models import Books, User_Bookmark, Rate, Comment
+from django.db.models import Q
 import random
+from django.urls import reverse
 from authorization.models import Userprofile
-from django.http import JsonResponse
+#from django.http import JsonResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from .utillls import get_location
 from django.contrib.auth.decorators import login_required
 import requests
 
 # Create your views here.
+
+def get_location2(request):
+    location_data = get_location(request)
+    print(location_data)
+    country = location_data.get("country")
+    return country
 
 class BookDetailView(View):
     def get(self, request, *args, **kwargs):
@@ -52,6 +61,17 @@ def search_books(request):
     results = []
 
     if title_query or author_query:
+
+        db_results = Books.objects.filter(Q(title__icontains=title_query) | Q(author__icontains=author_query))
+        for result in db_results:
+            results.append({
+                'id': result.google_books_id,
+                'title': result.title,
+                'author': result.author,
+                'isbn': result.isbn,
+            })
+
+        # search based on api
         base_url = "https://www.googleapis.com/books/v1/volumes"
 
         # Construct the query based on title and/or author
@@ -127,7 +147,7 @@ class BookmarkView(View):
             return HttpResponse('Bookmark updated successfully.')
         else:
             return HttpResponse('Invalid data.')
-        
+    
 def bookmark_view(request, google_books_id):
     book = get_object_or_404(Books, google_books_id=google_books_id)
     bookmark, created = User_Bookmark.objects.get_or_create(
@@ -145,6 +165,13 @@ def bookmark_view(request, google_books_id):
         form = BookmarkForm(instance=bookmark)  # This line populates the form with the saved data
 
     return render(request, 'form.html', {'form': form, 'bookmark': bookmark})
+
+def delete(request, google_books_id):
+    book = get_object_or_404(Books, google_books_id=google_books_id)
+    bookmark = get_object_or_404(User_Bookmark, user=request.user, book=book)
+    bookmark.delete()
+    return redirect('book_detail2', id=book.google_books_id)
+
 
 @login_required
 def rate_view(request, google_books_id):
@@ -185,17 +212,16 @@ def feed_view(request):
     # Get the actions of the users that the current user is following
     comments = Comment.objects.filter(user__in=following_users)
     rates = Rate.objects.filter(user__in=following_users)
-    # bookmarks = User_Bookmark.objects.filter(user__in=following_users)
+    bookmarks = User_Bookmark.objects.filter(user__in=following_users)
 
     # Combine all actions into one list and sort them by date (newest first)
     actions = sorted(
-        list(comments) + list(rates), #+ list(bookmarks),
+        list(comments) + list(rates) + list(bookmarks),
         key=lambda action: action.created_at,  # Replace with your timestamp field
         reverse=True
     )
 
     return render(request, 'feed.html', {'actions': actions})
-
 
 def shelf_view(request):
     response = requests.get('https://www.googleapis.com/books/v1/volumes?q={}&key={}'.format('python', settings.GOOGLE_BOOKS_API_KEY))
@@ -211,11 +237,78 @@ def shelf_view(request):
                 total_pages=book['volumeInfo']['pageCount'],
                 image=book['volumeInfo']['imageLinks']['thumbnail']
             )
-    books = Books.objects.all()
+    genres = Books.objects.values_list('genre', flat=True).distinct()
+    selected_genre = request.GET.get('genre')
+    if selected_genre:
+        books = Books.objects.filter(genre=selected_genre)
+    else:
+        books = Books.objects.all()
     context = {
-        'books': books
+        'books': books,
+        'genres': genres,
+        'suggested': suggested,
     }
     return render(request, 'shelf.html', context)
+
+def suggested(request):
+    user = request.user
+    bookmark = User_Bookmark.objects.filter(user=user).values_list('book__genre', flat=True)
+
+    suggested = []
+
+
+    for genre in bookmark:
+        params = {'langRestrict': 'en'}
+        response = requests.get(f'https://www.googleapis.com/books/v1/volumes?q=subject:{genre}', params=params)
+
+
+        if response.status_code == 200:
+            data = response.json()
+            if 'items' in data:
+                # Add the books from the response to the suggested_books list
+                suggested.extend(data['items'])
+
+    return render(request, 'suggested.html', {'suggested': suggested})
+
+def author_page(request, author):
+    # Replace spaces in the author's name with '+'
+    author = author.replace(' ', '+')
+
+    # Send a GET request to the Google Books API
+    params = {'langRestrict': 'en'}
+    response = requests.get(f'https://www.googleapis.com/books/v1/volumes?q=inauthor:{author}', params=params)
+
+    # Parse the JSON response
+    data = response.json()
+
+    # Extract the book data from the response
+    books = [item['volumeInfo'] for item in data['items']]
+    
+    
+
+    # Initialize author_info, author_picture, and author_bio to None
+    author_info = None
+    author_picture = None
+    author_bio = None
+
+    try:
+        author_info = books[0]['authors'][0]
+        author_picture = books[0]['imageLinks']['thumbnail']
+        author_bio = books[0]['description']
+    except KeyError:
+        pass  # One of the keys was not found, ignore it
+    
+    book_ids = [book['id'] for book in data['items']]
+    book_ids = zip(books, book_ids)
+
+    # Render the author page template with the book data
+    return render(request, 'author_page.html', {
+        'author': author_info,
+        'picture': author_picture,
+        'bio': author_bio,
+        'books': books,
+        'book_ids': book_ids,
+    })
 
 def save_random_books(request):
     # Generate a random number of books to fetch (between 1 and 40)

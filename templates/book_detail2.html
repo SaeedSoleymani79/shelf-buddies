@@ -18,15 +18,20 @@
     <p>Total Pages: {{ book.total_pages }}</p>
     
     {% if bookmark %}
+        <form method="POST" action="{% url 'delete' google_books_id=bookmark.book.google_books_id %}">
+            {% csrf_token %}
+            <input type="submit" value="Delete Bookmark">
+        </form>
+        <br>
         {{ bookmark.reading_status }}
         <br>
         {% if bookmark.reading_status == "CURRENTLY_READING" %}
             <p> I have read {{ bookmark.reading_progress}} out of {{ book.total_pages}}
             <br>
-            <a href="{% url 'bookmark' google_books_id=book.google_books_id %}"> bookmark </a>
+            <a href="{% url 'bookmark' google_books_id=book.google_books_id %}"> modify bookmark </a>
         {% else %}
             <br>
-            <a href="{% url 'bookmark' google_books_id=book.google_books_id %}"> bookmark </a>
+            <a href="{% url 'bookmark' google_books_id=book.google_books_id %}"> modify bookmark </a>
         {% endif %}
     {% else %}
         <a href="{% url 'bookmark' google_books_id=book.google_books_id %}"> bookmark </a>
@@ -44,7 +49,7 @@
 
     {% for comment in comments %}
     <br>
-        {{comment.user.username}}: {{comment.review}}
+        <a href="{% url 'profile' comment.user.username %}">{{comment.user.username}}</a>: {{comment.review}}
     {% empty %}
         <a href="{% url 'review_book' google_books_id=book.google_books_id %}">Review</a>
     {% endfor %}
