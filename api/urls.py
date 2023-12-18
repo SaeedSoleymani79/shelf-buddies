@@ -3,7 +3,6 @@ from .views import BookDetailView, get_location2, author_page, search_books, rat
 
 urlpatterns = [
     path('book/<str:id>/', BookDetailView.as_view(), name='book_detail2'),
-    path('loc/', get_location2, name='loc'),
     path('author/<str:author>/', author_page, name='author'),
     path('suggested/', suggested, name='suggested'),
     path('rate/<str:google_books_id>/', rate_view, name='rate_book'),

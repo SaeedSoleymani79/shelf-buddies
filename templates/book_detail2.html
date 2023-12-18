@@ -2,60 +2,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{{ book.title }}</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>  <!-- jQuery library -->
-
+    <link rel="stylesheet" href='style.css'>
 </head>
 <body>
 
 {% block content %}
-<div style="margin-left: 20%; padding: 1em;">
-    <h1>{{ book.title }}</h1>
-    <img src="{{ book.image }}" alt="{{ book.title }} cover">
-    <p>Author: {{ book.author }}</p>
-    <p>Genre: {{ book.genre }}</p>
-    <p>ISBN: {{ book.isbn }}</p>
-    <p>Total Pages: {{ book.total_pages }}</p>
-    
-    {% if bookmark %}
-        <form method="POST" action="{% url 'delete' google_books_id=bookmark.book.google_books_id %}">
-            {% csrf_token %}
-            <input type="submit" value="Delete Bookmark">
-        </form>
-        <br>
-        {{ bookmark.reading_status }}
-        <br>
-        {% if bookmark.reading_status == "CURRENTLY_READING" %}
-            <p> I have read {{ bookmark.reading_progress}} out of {{ book.total_pages}}
+<title>{{ book.title }}</title>
+<style>
+    a {
+        color: black;
+    }
+    a:hover {
+        transition : 610ms;
+        transform : translateY(-0px);
+        color: #0066cc;
+        border: none;   
+    }
+</style>
+<div>
+    <div class='leftside'>
+        <img src="{{ book.image }}" alt="{{ book.title }} cover">
+    </div>
+    <div class='rightside'>
+        <h1>{{ book.title }}</h1>
+        <p>Author: <a href="{% url 'author' author=book.author %}" >{{ book.author }}</a></p>
+        <p>Genre: {{ book.genre }}</p>
+        <p>ISBN: {{ book.isbn }}</p>
+        <p>Total Pages: {{ book.total_pages }}</p>
+        
+        {% if bookmark %}
+            <form method="POST" action="{% url 'delete' google_books_id=bookmark.book.google_books_id %}">
+                {% csrf_token %}
+                <input type="submit" value="Delete Bookmark">
+            </form>
             <br>
-            <a href="{% url 'bookmark' google_books_id=book.google_books_id %}"> modify bookmark </a>
+            {{ bookmark.reading_status }}
+            <br>
+            {% if bookmark.reading_status == "CURRENTLY_READING" %}
+                <p> I have read {{ bookmark.reading_progress}} out of {{ book.total_pages}}
+                <br>
+                <a href="{% url 'bookmark' google_books_id=book.google_books_id %}"> modify bookmark </a>
+            {% else %}
+                <br>
+                <a href="{% url 'bookmark' google_books_id=book.google_books_id %}"> modify bookmark </a>
+            {% endif %}
         {% else %}
-            <br>
-            <a href="{% url 'bookmark' google_books_id=book.google_books_id %}"> modify bookmark </a>
+            <a href="{% url 'bookmark' google_books_id=book.google_books_id %}"> bookmark </a>
         {% endif %}
-    {% else %}
-        <a href="{% url 'bookmark' google_books_id=book.google_books_id %}"> bookmark </a>
-    {% endif %}
-    
-    <br>
-    {% if rating %}
-        Your rating: {{ rating.rate }} out of 5
-        <a href="{% url 'rate_book' google_books_id=book.google_books_id %}">Change your rating</a>
-    {% else %}
-        <a href="{% url 'rate_book' google_books_id=book.google_books_id %}">Rate this book</a>
-    {% endif %}
-    <br>
-    <a href="{% url 'review_book' google_books_id=book.google_books_id %}"> Review </a>
+        
+        <br>
+        {% if rating %}
+            Your rating: {{ rating.rate }} out of 5
+            <a href="{% url 'rate_book' google_books_id=book.google_books_id %}">Change your rating</a>
+        {% else %}
+            <a href="{% url 'rate_book' google_books_id=book.google_books_id %}">Rate this book</a>
+        {% endif %}
+        <br>
+        <a href="{% url 'review_book' google_books_id=book.google_books_id %}"> Review </a>
 
-    {% for comment in comments %}
-    <br>
-        <a href="{% url 'profile' comment.user.username %}">{{comment.user.username}}</a>: {{comment.review}}
-    {% empty %}
-        <a href="{% url 'review_book' google_books_id=book.google_books_id %}">Review</a>
-    {% endfor %}
+        {% for comment in comments %}
+        <br>
+            <a href="{% url 'profile' comment.user.username %}">{{comment.user.username}}</a>: {{comment.review}}
+        {% empty %}
+            <a href="{% url 'review_book' google_books_id=book.google_books_id %}">Review</a>
+        {% endfor %}
 
-    {% endblock content %}
-
+        {% endblock content %}
+    <div>
 </div>
     <script>
 

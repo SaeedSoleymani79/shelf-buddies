@@ -307,13 +307,13 @@
     
         <!-- Middle Navbar content -->
         <div class="middle">
-            <a href="#"><i class="fa fa-plus"></i> Chat </a>
             <a href="{% url 'shelf' %}"><i class="fa fa-bookmark"></i> Shelf </a>
         </div>
     
+
         <!-- Bottom Navbar content -->
         <div class="bottom">
-            <a id='settingslink' href="#"><i class="fa fa-cog"></i> Settings</a>
+            <a class="primary" onclick="window.dialog.showModal();" id='settingslink' href="#"><i class="fa fa-cog"></i> Settings</a>
             <!-- Settings Modal -->
             <div id="settingsModal" class="modal" style="display: none;">
                 <div class="modal-content">
@@ -402,7 +402,7 @@
                 <div style="display: flex; flex-direction: row;">
                     {% for book in reading_books %}
                         <div style="margin-right: 20px; text-align: center;">
-                            <img src="{{ book.image }}" alt="Book" style="width: 100px;">
+                            <a href="{% url  'book_detail2' id=book.google_books_id %}" ><img src="{{ book.image }}" alt="Book" style="width: 100px;"></a>
                             <p>{{ book.title }}</p>
                         </div>
                     {% endfor %}
@@ -413,7 +413,7 @@
                 <div style="display: flex; flex-direction: row;">
                     {% for book in want_to_read_books %}
                         <div style="margin-right: 20px; text-align: center;">
-                            <img src="{{ book.image }}" alt="Book" style="width: 100px;">
+                            <a href="{% url  'book_detail2' id=book.google_books_id %}" ><img src="{{ book.image }}" alt="Book" style="width: 100px;"></a>
                             <p>{{ book.title }}</p>
                         </div>
                     {% endfor %}
@@ -424,7 +424,7 @@
                 <div style="display: flex; flex-direction: row;">
                     {% for book in already_read_books %}
                         <div style="margin-right: 20px; text-align: center;">
-                            <img src="{{ book.image }}" alt="Book" style="width: 100px;">
+                            <a href="{% url  'book_detail2' id=book.google_books_id %}" ><img src="{{ book.image }}" alt="Book" style="width: 100px;"></a>
                             <p>{{ book.title }}</p>
                         </div>
                     {% endfor %}
