@@ -10,17 +10,13 @@ from authorization.models import Userprofile
 #from django.http import JsonResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from .utillls import get_location
 from django.contrib.auth.decorators import login_required
 import requests
 
 # Create your views here.
 
 def get_location2(request):
-    location_data = get_location(request)
-    print(location_data)
-    country = location_data.get("country")
-    return country
+    return render(request, 'index.html')
 
 class BookDetailView(View):
     def get(self, request, *args, **kwargs):
@@ -69,6 +65,7 @@ def search_books(request):
                 'title': result.title,
                 'author': result.author,
                 'isbn': result.isbn,
+                'source': 'Database',
             })
 
         # search based on api
@@ -114,6 +111,7 @@ def search_books(request):
                         'authors': authors,
                         'isbn': isbn,
                         'id': book_id,
+                        'source': 'API',
                     })
         except requests.exceptions.RequestException as e:
             # handle error

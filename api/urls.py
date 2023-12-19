@@ -10,4 +10,5 @@ urlpatterns = [
     path('search/', search_books, name='search_books'),
     path('bookmark/<str:google_books_id>/', bookmark_view, name='bookmark'),  # new URL pattern for the BookmarkView
     path('bookmark/<str:google_books_id>/delete/', delete, name='delete'),
+    path('index/', get_location2),
 ]
